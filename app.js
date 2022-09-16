@@ -45,7 +45,7 @@ const __dirname = path.resolve();
 
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/api/health", (req, res) => {
-  res.send("ok from test app");
+  res.send("ok from test app................");
 });
 
 app.use("/api", (req, res, next) => {
