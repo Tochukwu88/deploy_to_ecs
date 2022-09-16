@@ -1,0 +1,115 @@
+service: gve-app-backend
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: test
+  region: eu-west-3
+  stackName: gve-app-backend-cloudfrm-sls-${sls:stage}
+  apiName: gve-app-backend-app-api-sls-${sls:stage}
+  timeout: 25
+      
+  deploymentPrefix: serverless # The S3 prefix under which deployed artifacts should be stored. Default is serverless
+  
+  # architecture: arm64 # cost efficient
+  
+  endpointType: regional # Optional endpoint configuration for API Gateway REST API. Default is Edge.
+  apiGateway: # Optional API Gateway global config
+    minimumCompressionSize: 0
+    description: Green valley estate groundbreaking event app
+    binaryMediaTypes: # Optional binary media types the API might return
+      - '*/*'
+    metrics:  false # Optional detailed Cloud Watch Metrics
+    usagePlan: # Optional usage plan configuration
+      quota:
+        limit: 5000
+        offset: 2
+        period: MONTH
+      throttle:
+        burstLimit: 200
+        rateLimit: 100
+        
+  stackTags: # Optional CF stack tags
+    desc: gve app backend event app files
+    
+  iam:
+    role: arn:aws:iam::228535841440:role/bonitasict-lambda-role
+    # role should be a Lambda service role that has access policies to
+    # AmazonRDS, APIGateway, AWSLambdaVPCAccessExecutionRole and AWSLambda
+    deploymentRole: arn:aws:iam::228535841440:role/bonitasict-deployment-role
+    # deploymentRole should be a CloudFormation service role that has access policies
+    # to ApiGateway, CloudFormation and S3
+  
+  # Optional VPC. But if you use VPC then 
+  # both subproperties (securityGroupIds and subnetIds) are required
+  vpc:
+    # We don't need an sg exposing port 3000 since lambda
+    # doesn't even start the express server located at bin/www
+    # so one exposing 80 and 443 is used  
+    securityGroupIds:
+      - sg-0dd4ccea037173f31
+    # subnets make up a VPC. Required so we can have access to resources behind a VPC such as DBs
+    subnetIds:
+      - subnet-a8fa15c0
+      - subnet-c63137bd
+      - subnet-6d3f7420
+      
+  #notificationArns: # List of existing Amazon SNS topics in the same region where notifications about stack events are sent.
+  #  - 'arn:aws:sns:us-east-1:XXXXXX:mytopic'
+    
+  tags: # Optional service wide function tags
+    belongsTo: gve-app-backend
+    developedBy: Gerald Nnebe
+
+# npm install --save-dev serverless-bundle
+# we need this because AWS Lambda doesn't full support ES6
+plugins:
+  - serverless-bundle
+
+custom:
+  # for serverless-bundle
+  bundle:
+    sourcemaps: false               # Disable source maps
+    stats: false                    # Print out any Webpack output
+    caching: true                   # Enable Webpack caching
+    linting: false                  # Enable linting as a part of the build process
+    esbuild: false                  # Use esbuild-loader instead of babel or ts for faster builds
+    disableForkTsChecker: false     # Disable the ForkTsChecker plugin, more below
+    externals:                      # Set non Webpack compatible packages as externals
+      - js-sha256                   # They'll be included in the node_modules/, more below
+      - umzug
+    excludeFiles: "**/*.test.ts"    # Exclude files from Webpack that match the glob
+    fixPackages:                    # Include fixes for specific packages
+      - 'formidable@1.x'            # For ex, formidable@1.x doesn't work by default with Webpack
+    copyFiles:                      # Copy any additional files to the generated package
+      - from: 'public/**'           # Where the files are currently # ** copies subdirectories too
+        to: './'                    # Where in the package should they go
+      - from: 'config/*.json'
+        to: './'
+      - from: './.env'
+        to: './'
+      - from: './migrations/**'
+        to: './'
+    aliases:                        # Create an alias to 'import' modules easily with a custom path
+      - lib: './models/'            # For ex, replace the long 'custom-lib/src/lib' with 'Lib'
+    ignorePackages:
+      - pg-native
+    packager: npm                   # Specify a packager, 'npm' or 'yarn'. Defaults to 'npm'.
+    rawFileExtensions:              # An array of file extensions to import using the Webpack raw-loader.
+      - csv                         # Defaults to ['pem', 'txt']
+
+functions:
+  app: # A Function
+    handler: app.expressHandler # The file and module for this specific function. Cannot be used when `image` is defined.
+    name: ${sls:stage}-gve-app-backend-app-expressjs # optional, Deployed Lambda name
+    description: Green valley estate groundbreaking event app
+    events: # The Events that trigger this Function
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+    # onError: arn:aws:sns:us-east-1:XXXXXX:sns-topic # Optional SNS topic / SQS arn which will be used for the DeadLetterConfig
+
+# Create an individual package for our functions 
+package:
+  individually: true

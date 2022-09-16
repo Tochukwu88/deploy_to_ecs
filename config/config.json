@@ -1,0 +1,41 @@
+{
+  "development": {
+    "username": "teecee",
+    "password": "flower54",
+    "database": "bonitasict",
+    "host": "127.0.0.1",
+    "dialect": "postgres",
+    "define": {
+      "freezeTableName": true,
+      "charset": "utf8",
+      "collate": "utf8_general_ci"
+    }
+  },
+  "test": {
+    "username": "teecee",
+    "password": "flower54%",
+    "database": "article",
+    "port": 5432,
+    "host": "teeceedev.ck8zgn6lf3kl.us-east-1.rds.amazonaws.com",
+    "dialect": "postgres",
+    "define": {
+      "freezeTableName": true,
+      "charset": "utf8",
+      "collate": "utf8_general_ci"
+    }
+  },
+  "production": {
+    "username": "teecee",
+    "password": "flower54%",
+    "database": "article",
+    "port": 5432,
+    "host": "teeceedev.ck8zgn6lf3kl.us-east-1.rds.amazonaws.com",
+    "dialect": "postgres",
+    "define": {
+      "freezeTableName": true,
+      "charset": "utf8",
+      "collate": "utf8_general_ci"
+    }
+   }
+  
+}
